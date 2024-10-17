@@ -1,0 +1,198 @@
+using System;
+using System.Threading;
+
+interface IKemampuan
+{
+    int basic_attack();
+    int plasma_cannon();
+    int electric_shock();
+    int super_shield();
+}
+
+public abstract class BaseRobotPlayer
+{
+    public string nama { get; set; }
+    public int hp { get; set; }
+    public int armor { get; set; }
+    public int mana { get; set; }
+    public int damage { get; set; }
+    public int pengurangan_mana_basic { get; set; }
+    public int pengurangan_mana_skill { get; set; }
+
+    public abstract int serang();
+    public abstract int gunakan_skill(int skill);  // Perbaikan return type dari void ke int
+    public abstract void CetakInformasi();
+}
+
+class RobotPlayer : BaseRobotPlayer, IKemampuan
+{
+    public int basic_attack() { return 0; }
+
+    public override int serang()
+    {
+        if (mana > pengurangan_mana_basic)
+        {
+            mana -= pengurangan_mana_basic;
+            return damage;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    public int plasma_cannon()
+    {
+        mana -= pengurangan_mana_skill;
+        return damage + 75;
+    }
+
+    public int electric_shock()
+    {
+        mana -= pengurangan_mana_skill;
+        return damage + 100;
+    }
+
+    public int super_shield()
+    {
+        mana -= pengurangan_mana_skill;
+        armor += 100;
+        return 0;
+    }
+
+    public override int gunakan_skill(int skill)
+    {
+        if (skill == 1) // Plasma cannon
+        {
+            if (mana > pengurangan_mana_skill)
+            {
+                return plasma_cannon();
+            }
+        }
+        else if (skill == 2) // Electric shock
+        {
+            if (mana > pengurangan_mana_skill)
+            {
+                return electric_shock();
+            }
+        }
+        else if (skill == 3) // Super shield
+        {
+            if (mana > pengurangan_mana_skill)
+            {
+                return super_shield();
+            }
+        }
+        else // Healing
+        {
+            hp += 200; // Jumlah HP Healing
+            mana += 30; // Jumlah Mana Healing
+            return 0;
+        }
+
+        return 0;
+    }
+
+    public override void CetakInformasi()
+    {
+        Console.WriteLine($"Karakter           : {nama}");
+        Console.WriteLine($"HP Tersisa         : {hp}");
+        Console.WriteLine($"Mana Tersisa       : {mana}");
+        Console.WriteLine($"Armor              : {armor}");
+    }
+}
+
+public abstract class BaseRobotBos
+{
+    public string nama { get; set; }
+    public int hp { get; set; }
+
+    public abstract int diserang(int skill);
+    public abstract void mati();
+}
+
+class RobotBos : BaseRobotBos
+{
+    public override int diserang(int skill)
+    {
+        hp -= skill;
+        return hp;
+    }
+
+    public override void mati()
+    {
+        Console.WriteLine($"{nama} telah mati.....");
+    }
+}
+
+public class Program
+{
+    static void Main(string[] args)
+    {
+        RobotPlayer player = new RobotPlayer();
+        player.nama = "Astrobot";
+        player.hp = 8200;
+        player.mana = 350;
+        player.damage = 250;
+        player.pengurangan_mana_basic = 10;
+        player.pengurangan_mana_skill = 50;
+
+        RobotBos musuh = new RobotBos();
+        musuh.nama = "Decepticon";
+        musuh.hp = 15000;
+
+        Console.WriteLine("Enter untuk mengadu Astrobot dan Decepticon!");
+        Console.ReadLine();
+
+        while (musuh.hp > 0)
+        {
+            Console.WriteLine("--------------------------------------------------------------------------");
+            player.CetakInformasi();
+            Console.WriteLine($"HP {musuh.nama} saat ini : {musuh.hp}");
+            Console.WriteLine($"Ayo {player.nama} serang!!! , jumlah mana {player.mana}, damage {player.damage}");
+            Console.WriteLine("1.Basic Attack");
+            Console.WriteLine("2.Plasma Canon");
+            Console.WriteLine("3.Electric Shock");
+            Console.WriteLine("4.Super Shield");
+            Console.WriteLine("5.Heal");
+            Console.WriteLine("--------------------------------------------------------------------------");
+            string pilihan = Console.ReadLine();
+
+            if (pilihan == "1") // Basic Attack
+            {
+                Console.WriteLine("Menyerang lawan dengan basic attack");
+                musuh.diserang(player.serang());
+                Console.WriteLine($"Lawan diserang !! HP Lawan Saat ini {musuh.hp}");
+            }
+            else if (pilihan == "2") // Plasma Canon
+            {
+                Console.WriteLine("Menyerang lawan dengan Plasma Canon");
+                musuh.diserang(player.gunakan_skill(1));
+                Console.WriteLine($"Lawan diserang !! HP Lawan Saat ini {musuh.hp}");
+            }
+            else if (pilihan == "3") // Electric Shock
+            {
+                Console.WriteLine("Menyerang lawan dengan Electric Shock!!");
+                musuh.diserang(player.gunakan_skill(2));
+                Console.WriteLine($"Lawan diserang !! HP Lawan Saat ini {musuh.hp}");
+                Console.WriteLine($"{musuh.nama} melambattt !!!");
+            }
+            else if (pilihan == "4") // Super Shield
+            {
+                Console.WriteLine("Menambah armor");
+                player.gunakan_skill(3);
+                Console.WriteLine($"Menambah armor... Armor saat ini {player.armor}");
+            }
+            else // Healing
+            {
+                Console.WriteLine("Healing");
+                player.gunakan_skill(4);
+                Console.WriteLine($"Healing... HP saat ini {player.hp}");
+            }
+        }
+
+        musuh.mati(); // Method Mati Musuh
+        Console.WriteLine("Horee Kamu Menang!!!!");
+        Thread.Sleep(2500);
+    }
+}
